@@ -1,3 +1,4 @@
+from os import access
 import shutil
 
 import torch
@@ -317,13 +318,12 @@ class trainer:
         )
 
         gpus = -1 if use_gpu else 0
-
+#delete  progress_bar_refresh_rate=5,since this keyword argument is no longer supported by latest version (1.7.0) of pytorch.Lightning.Trainer module
         trainer = Trainer(
             logger=logger,
             callbacks=early_stop_callback,
             max_epochs=max_epochs,
-            gpus=gpus,
-            progress_bar_refresh_rate=5,
+            gpus=gpus,           
             tpu_cores=tpu_cores
         )
 
@@ -496,12 +496,12 @@ class trainer:
         }
         return output
 
-    def upload(self, hf_username, model_name):
-        hf_password = getpass("Enter your HuggingFace password")
+    def upload(self, hf_username, model_name, token):
+        if token is None: 
+            token = getpass("Enter your HuggingFace access token")
         if Path("./model").exists():
             shutil.rmtree("./model")
-        token = HfApi().login(username=hf_username, password=hf_password)
-        del hf_password
+        HfApi.set_access_token(token)
         model_url = HfApi().create_repo(token=token, name=model_name, exist_ok=True)
         model_repo = Repository(
             "./model",
